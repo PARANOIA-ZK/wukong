@@ -12,7 +12,7 @@ public class StringUtil {
      * @return
      */
     public static String format(String s) {
-        String str = s.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘<< >> 《 》 _ – ；：”“’。，、？|-]", "");
+        String str = s.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘<< >> 《 》 \\ _ – ；：”“’。，、？|-]", "");
         return str;
     }
 }

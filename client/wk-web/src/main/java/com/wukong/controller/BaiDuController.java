@@ -1,9 +1,6 @@
 package com.wukong.controller;
 
 import com.hankcs.hanlp.HanLP;
-import com.hankcs.hanlp.seg.Dijkstra.DijkstraSegment;
-import com.hankcs.hanlp.seg.NShort.NShortSegment;
-import com.hankcs.hanlp.seg.Segment;
 import com.wukong.util.StringUtil;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -29,8 +25,6 @@ import static com.wukong.util.JsoupUtil.getDocument;
 @RestController
 public class BaiDuController {
 
-    private static volatile StringBuilder sb = new StringBuilder();
-
     private static ExecutorService service = Executors.newFixedThreadPool(50);
     private static CompletionService<String> execcomp = new ExecutorCompletionService<String>(service);
 
@@ -44,6 +38,7 @@ public class BaiDuController {
         pages.forEach(page -> {
             execcomp.submit(getH3AndHref(page));
         });
+        StringBuilder sb = new StringBuilder();
         pages.forEach(page -> {
             try {
                 Future<String> future = execcomp.take();
@@ -58,22 +53,9 @@ public class BaiDuController {
         System.out.println("sb = " + StringUtil.format(sb.toString()));
         List<String> keywordList = HanLP.extractKeyword(StringUtil.format(sb.toString()), 20);
         System.out.println("高频词汇：" + keywordList);
-        return keywordList.toString();
-    }
-
-    @SuppressWarnings("AlibabaThreadPoolCreation")
-    public static void main(String[] args) throws IOException, InterruptedException {
-
-        Segment nShortSegment = new NShortSegment().enableCustomDictionary(false).enablePlaceRecognize(true).enableOrganizationRecognize(true);
-        Segment shortestSegment = new DijkstraSegment().enableCustomDictionary(false).enablePlaceRecognize(true).enableOrganizationRecognize(true);
-        String[] testCase = new String[]{
-                "今天，刘志军案的关键人物,山西女商人丁书苗在市二中院出庭受审。",
-                "刘喜杰石国祥会见吴亚琴先进事迹报告团成员",
-        };
-        for (String sentence : testCase)
-        {
-            System.out.println("N-最短分词：" + nShortSegment.seg(sentence) + "\n最短路分词：" + shortestSegment.seg(sentence));
-        }
+        List<String> phraseList = HanLP.extractPhrase(StringUtil.format(sb.toString()), 20);
+        System.out.println("关键词汇：" + phraseList);
+        return "高频词汇：" + keywordList.toString();
     }
 
 
@@ -87,7 +69,7 @@ public class BaiDuController {
         List<String> result = new ArrayList<>(10000);
         result.add(url);
         String nextPageUrl = url;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 50; i++) {
             try {
                 Document parentDoc = getDocument(nextPageUrl);
                 Element pageElements = parentDoc.getElementById("page");
@@ -108,6 +90,12 @@ public class BaiDuController {
     }
 
 
+    /**
+     * 拿取当前页下所有标题和链接
+     *
+     * @param url
+     * @return
+     */
     public static Callable<String> getH3AndHref(String url) {
 
         StringBuilder sb = new StringBuilder();
@@ -120,7 +108,8 @@ public class BaiDuController {
                 Elements resultsInOnePage = content_left.children();
                 System.out.println("resultsInOnePage.size() = " + resultsInOnePage.size());
                 Element h3;
-
+                String h3Text;
+                String h3Href;
                 for (Element one : resultsInOnePage) {
                     try {
                         h3 = one.getElementsByTag("h3").get(0);
@@ -128,8 +117,8 @@ public class BaiDuController {
                         e.printStackTrace();
                         continue;
                     }
-                    String h3Text = h3.text();
-                    String h3Href = h3.getElementsByTag("a").get(0).attr("href");
+                    h3Text = h3.text();
+                    h3Href = h3.getElementsByTag("a").get(0).attr("href");
                     sb.append(h3Text);
                     System.out.println("h3Text = " + h3Text);
                     System.out.println("h3Href = " + h3Href);

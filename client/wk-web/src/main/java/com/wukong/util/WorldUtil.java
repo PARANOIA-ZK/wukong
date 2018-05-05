@@ -18,7 +18,7 @@ public class WorldUtil {
      * @param str
      * @return
      */
-    public List<Term> nShortSegment(String str){
+    public static List<Term> nShortSegment(String str){
         Segment nShortSegment = new NShortSegment().enableCustomDictionary(false).enablePlaceRecognize(true).enableOrganizationRecognize(true);
 
         return nShortSegment.seg(str);
