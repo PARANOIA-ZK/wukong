@@ -1,0 +1,31 @@
+spring:
+  application:
+      name: wk-gateway
+#  cloud:
+#      config:
+#          uri: http://localhost:8900
+
+eureka:
+  instance:
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+  client:
+    serviceUrl:
+      defaultZone: http://server:8081/eureka/
+
+server:
+  port: 5555
+
+
+zuul:
+  sensitiveHeaders:
+  routes:
+      gateway:
+          path: /api/**
+          url: forward:/local
+      searchms:
+          path: /products/**
+          serviceId: mz-search-ms
+      userms:
+          path: /user/**
+          serviceId: mz-user-ms
+  add-proxy-headers: true
